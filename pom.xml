@@ -4,11 +4,11 @@
 
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.github.jknack</groupId>
-  <artifactId>bower.java</artifactId>
+  <artifactId>arbor</artifactId>
   <version>0.1.0-SNAPSHOT</version>
 
-  <name>Handlebars.java</name>
-  <description>A package manager for the web written in Java</description>
+  <name>Arbor</name>
+  <description>A Javascript Dependency Management Tool for Java</description>
 
   <url>https://github.com/jknack/bower.java</url>
 
@@ -28,9 +28,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:git@github.com:jknack/bower.java.git</connection>
-    <developerConnection>scm:git:git@github.com:jknack/bower.java.git</developerConnection>
-    <url>scm:git:git@github.com:jknack/bower.java.git</url>
+    <connection>scm:git:git@github.com:jknack/arbor.git</connection>
+    <developerConnection>scm:git:git@github.com:jknack/arbor.git</developerConnection>
+    <url>scm:git:git@github.com:jknack/arbor.git</url>
     <tag>HEAD</tag>
   </scm>
 
