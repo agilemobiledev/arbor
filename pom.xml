@@ -97,6 +97,12 @@
       <version>${jackson2-version}</version>
     </dependency>
 
+    <dependency>
+      <groupId>org.codehaus.plexus</groupId>
+      <artifactId>plexus-archiver</artifactId>
+      <version>2.2</version>
+    </dependency>
+
     <!-- Test dependencies -->
     <dependency>
       <groupId>ch.qos.logback</groupId>

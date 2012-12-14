@@ -12,7 +12,7 @@
  * containing Woodstox, in file "ASL2.0", under the same directory
  * as this file.
  */
-package com.github.jknack.arbor;
+package com.github.jknack.arbor.version;
 
 /**
  * A version expression.
@@ -38,6 +38,11 @@ package com.github.jknack.arbor;
  * @since 0.0.1
  */
 public interface Expression extends Comparable<Expression> {
+
+  /**
+   * Identify the latest version of a dependency.
+   */
+  String LATEST = "latest";
 
   /**
    * Match any version.

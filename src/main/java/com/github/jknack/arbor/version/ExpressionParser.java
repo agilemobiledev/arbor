@@ -12,7 +12,7 @@
  * containing Woodstox, in file "ASL2.0", under the same directory
  * as this file.
  */
-package com.github.jknack.arbor;
+package com.github.jknack.arbor.version;
 
 import org.parboiled.Action;
 import org.parboiled.BaseParser;
@@ -50,6 +50,30 @@ public class ExpressionParser extends BaseParser<Expression> {
 
     ParseRunner<Expression> runner =
         new ReportingParseRunner<Expression>(parser.expression());
+
+    ParsingResult<Expression> result = runner.run(version);
+
+    if (result.hasErrors()) {
+      ParseError error = result.parseErrors.get(0);
+      throw new IllegalArgumentException(ErrorUtils.printParseError(error));
+    }
+    return result.resultValue;
+  }
+
+  /**
+   * Parse a version expression.
+   *
+   * @param version A version expression.
+   * @return An expression.
+   */
+  public static Expression simpleParse(final String version) {
+    if (version.length() == 0) {
+      return Expression.ANY;
+    }
+    ExpressionParser parser = Parboiled.createParser(ExpressionParser.class);
+
+    ParseRunner<Expression> runner =
+        new ReportingParseRunner<Expression>(parser.version());
 
     ParsingResult<Expression> result = runner.run(version);
 
@@ -205,6 +229,7 @@ public class ExpressionParser extends BaseParser<Expression> {
     final Var<Integer> idx = new Var<Integer>();
     return Sequence(
         Optional(operator(operator)),
+        ws(),
         new Action<Expression>() {
           @Override
           public boolean run(final Context<Expression> context) {
@@ -300,7 +325,17 @@ public class ExpressionParser extends BaseParser<Expression> {
    * @return A rule.
    */
   Rule tag(final Var<Version> version) {
-    return Sequence(Optional('-'), name(), setTag(version));
+    return Sequence(tag(), setTag(version));
+  }
+
+  /**
+   * Matches a tag.
+   *
+   * @return A rule.
+   */
+  Rule tag() {
+    return OneOrMore(FirstOf(CharRange('a', 'z'), CharRange('A', 'Z'), CharRange('0', '9'), '.',
+        '-'));
   }
 
   /**
@@ -310,8 +345,7 @@ public class ExpressionParser extends BaseParser<Expression> {
    * @return A rule.
    */
   Rule build(final Var<Version> version) {
-    return Sequence('-', number(), setBuild(version),
-        Optional('-', name(), setTag(version)));
+    return Sequence('-', number(), setBuild(version), Optional(tag(version)));
   }
 
   /**
@@ -331,7 +365,7 @@ public class ExpressionParser extends BaseParser<Expression> {
    */
   @MemoMismatches
   Rule number() {
-    return FirstOf('x', OneOrMore(CharRange('0', '9')));
+    return FirstOf(OneOrMore(CharRange('0', '9')), 'x', 'X');
   }
 
   /**
@@ -360,7 +394,7 @@ public class ExpressionParser extends BaseParser<Expression> {
    * @return A number.
    */
   int toNumber(final String text) {
-    if ("x".equals(text)) {
+    if ("x".equalsIgnoreCase(text)) {
       return 0;
     }
     return Integer.parseInt(text);

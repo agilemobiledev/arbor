@@ -12,19 +12,20 @@
  * containing Woodstox, in file "ASL2.0", under the same directory
  * as this file.
  */
-package com.github.jknack.arbor;
+package com.github.jknack.arbor.version;
 
 /**
- * Base class for expressions.
+ * A prefix operator.
  *
  * @author edgar.espina
  * @since 0.0.1
  */
-abstract class BaseExpression implements Expression {
+interface PrefixOperator extends Expression {
 
-  @Override
-  public boolean matches(final String expr) {
-    return matches(ExpressionParser.parse(expr));
-  }
-
+  /**
+   * Set the expression.
+   *
+   * @param expr The prefixed expression.
+   */
+  void setExpression(Expression expr);
 }

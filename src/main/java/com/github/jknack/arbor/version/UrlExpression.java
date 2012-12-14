@@ -12,7 +12,7 @@
  * containing Woodstox, in file "ASL2.0", under the same directory
  * as this file.
  */
-package com.github.jknack.arbor;
+package com.github.jknack.arbor.version;
 
 import java.net.URI;
 

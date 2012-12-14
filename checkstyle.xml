@@ -123,6 +123,7 @@
         <!-- Checks for Size Violations.                    -->
         <!-- See http://checkstyle.sf.net/config_sizes.html -->
         <module name="LineLength">
+          <property name="max" value="100"/>
           <property name="ignorePattern" value="^(import).*$"/>
         </module>
         <module name="MethodLength"/>
@@ -166,7 +167,7 @@
         <!-- <module name="HiddenField"/> -->
         <module name="IllegalInstantiation"/>
         <module name="InnerAssignment"/>
-        <!-- <module name="MagicNumber"/> -->
+        <module name="MagicNumber"/>
         <module name="MissingSwitchDefault"/>
         <module name="RedundantThrows"/>
         <module name="SimplifyBooleanExpression"/>
@@ -181,7 +182,6 @@
         <module name="VisibilityModifier">
           <property name="packageAllowed" value="true"/>
           <property name="protectedAllowed" value="true"/>
-          <property name="publicMemberPattern" value="handlebars|fn|inverse|params|hash|context|line|column|evidence|reason|message|filename"/>
         </module>
 
 
