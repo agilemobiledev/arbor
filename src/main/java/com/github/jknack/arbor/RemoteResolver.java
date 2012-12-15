@@ -73,4 +73,8 @@ public class RemoteResolver extends DependencyResolver {
     return new Dependency(path, location);
   }
 
+  @Override
+  public String name() {
+    return "http";
+  }
 }

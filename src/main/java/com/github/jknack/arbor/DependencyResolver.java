@@ -53,6 +53,13 @@ public abstract class DependencyResolver {
   }
 
   /**
+   * The resolver's name.
+   *
+   * @return The resolver's name.
+   */
+  public abstract String name();
+
+  /**
    * The home location of the dependencies. Required.
    *
    * @return The home location of the dependencies. Required.
@@ -71,21 +78,22 @@ public abstract class DependencyResolver {
    */
   public Dependency resolve(final String path) throws IOException {
     notEmpty(path, "The path is required.");
-    Dependency dependency = null;
-    if (canResolve(path)) {
-      dependency = resolveLocal(path);
-      if (!dependency.exists()) {
-        try {
+    try {
+      Dependency dependency = null;
+      if (canResolve(path)) {
+        dependency = resolveLocal(path);
+        if (!dependency.exists()) {
+
           dependency = doResolve(path);
-        } catch (HttpResponseException ex) {
-          if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-            return null;
-          }
-          throw ex;
         }
       }
+      return dependency;
+    } catch (HttpResponseException ex) {
+      if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        return null;
+      }
+      throw ex;
     }
-    return dependency;
   }
 
   /**

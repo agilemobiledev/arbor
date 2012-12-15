@@ -33,7 +33,47 @@ public class ArborTest {
 
   @Test
   public void backbone() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("backbone/0.9.2");
+    Dependency resolved = new Arbor(homeDir).resolve("backbone/0.9.9");
+    assertNotNull(resolved);
+    assertTrue("File not found", resolved.exists());
+    logger.info("{}", resolved);
+  }
+
+  @Test
+  public void backboneMarionette() throws IOException {
+    Dependency resolved = new Arbor(homeDir).resolve("Backbone.Marionette/1.0.0-beta6");
+    assertNotNull(resolved);
+    assertTrue("File not found", resolved.exists());
+    logger.info("{}", resolved);
+  }
+
+  @Test
+  public void underscore() throws IOException {
+    Dependency resolved = new Arbor(homeDir).resolve("underscore/latest");
+    assertNotNull(resolved);
+    assertTrue("File not found", resolved.exists());
+    logger.info("{}", resolved);
+  }
+
+  @Test
+  public void knockout() throws IOException {
+    Dependency resolved = new Arbor(homeDir).resolve("knockout/2.2.0");
+    assertNotNull(resolved);
+    assertTrue("File not found", resolved.exists());
+    logger.info("{}", resolved);
+  }
+
+  @Test
+  public void crossroads() throws IOException {
+    Dependency resolved = new Arbor(homeDir).resolve("crossroads/0.10.0");
+    assertNotNull(resolved);
+    assertTrue("File not found", resolved.exists());
+    logger.info("{}", resolved);
+  }
+
+  @Test
+  public void i18next() throws IOException {
+    Dependency resolved = new Arbor(homeDir).resolve("i18next/1.5.6");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -89,7 +129,7 @@ public class ArborTest {
 
   @Test
   public void coffeeScript() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("coffee-script/latest");
+    Dependency resolved = new Arbor(homeDir).resolve("npm@coffee-script/latest");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);

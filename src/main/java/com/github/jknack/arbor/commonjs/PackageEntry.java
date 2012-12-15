@@ -12,7 +12,7 @@
  * containing Woodstox, in file "ASL2.0", under the same directory
  * as this file.
  */
-package com.github.jknack.arbor.npm;
+package com.github.jknack.arbor.commonjs;
 
 import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.StringUtils.join;
@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +38,7 @@ import com.github.jknack.arbor.version.ExpressionParser;
  * @author edgar.espina
  * @since 0.1.0
  */
-public class NpmEntry {
+public class PackageEntry {
 
   /**
    * The entry's name.
@@ -50,6 +51,12 @@ public class NpmEntry {
    */
   @JsonProperty
   private Map<String, Date> time;
+
+  /**
+   * Available versions.
+   */
+  @JsonProperty
+  private Map<String, PackageJSON> versions;
 
   /**
    * The entry's name.
@@ -81,6 +88,30 @@ public class NpmEntry {
   @Override
   public String toString() {
     return new ToStringBuilder(this).append("name", name).build();
+  }
+
+  /**
+   * The available versions.
+   *
+   * @return The available versions.
+   */
+  public Map<String, PackageJSON> getVersions() {
+    if (versions == null) {
+      return Collections.emptyMap();
+    }
+    return new LinkedHashMap<String, PackageJSON>(versions);
+  }
+
+  /**
+   * Set and clear some time entries.
+   *
+   * @param time The time map.
+   */
+  void setTime(final Map<String, Date> time) {
+    // remove jam entries
+    time.remove("created");
+    time.remove("modified");
+    this.time = time;
   }
 
   /**

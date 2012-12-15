@@ -87,6 +87,12 @@ public class PackageJSON {
   private Distribution dist;
 
   /**
+   * A jam entry. Optional.
+   */
+  @JsonProperty
+  private Map<String, Object> jam;
+
+  /**
    * Required by Jackson.
    *
    * @see #from(File)
@@ -120,6 +126,12 @@ public class PackageJSON {
    */
   public String getMain() {
     String main = this.main;
+    if (isEmpty(main)) {
+      // try jam
+      if (jam != null) {
+        main = (String) jam.get("main");
+      }
+    }
     if (isEmpty(main)) {
       // TODO: check if index.js is the expected result for missing main entries.
       main = "index.js";
@@ -227,6 +239,9 @@ public class PackageJSON {
   public Dependency resolve(final File baseDir, final Map<String, List<Expression>> registry)
       throws IOException {
     File location = new File(baseDir, name + File.separator + version + File.separator + getMain());
+    if (!location.exists()) {
+      throw new PackageIntegrityException(name + "@" + version, location);
+    }
     Dependency root = new Dependency(name, version, location);
     Map<String, String> dependencies = getDependencies();
     for (Entry<String, String> entry : dependencies.entrySet()) {
