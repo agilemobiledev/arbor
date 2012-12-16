@@ -85,6 +85,21 @@ public class ExpressionParser extends BaseParser<Expression> {
   }
 
   /**
+   * True if the expression version matches a simple version expression.
+   *
+   * @param version The expression version.
+   * @return True if the expression version matches a simple version expression.
+   */
+  public static boolean valid(final String version) {
+    try {
+      simpleParse(version);
+      return true;
+    } catch (IllegalArgumentException ex) {
+      return false;
+    }
+  }
+
+  /**
    * Deal with version expression.
    *
    * @return A version expression rule.

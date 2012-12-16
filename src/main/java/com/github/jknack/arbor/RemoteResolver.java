@@ -40,9 +40,10 @@ public class RemoteResolver extends DependencyResolver {
   }
 
   @Override
-  protected Dependency doResolve(final String path) throws IOException {
+  protected Dependency doResolve(final DependencyDescriptor descriptor) throws IOException {
+    String path = descriptor.getPath();
     logger.info("GET: {}", path);
-    Dependency dependency = resolveLocal(path);
+    Dependency dependency = resolveLocal(descriptor);
     File location = dependency.getLocation();
     location.getParentFile().mkdirs();
     Get(path).execute().saveContent(location);
@@ -51,14 +52,21 @@ public class RemoteResolver extends DependencyResolver {
   }
 
   @Override
-  protected boolean canResolve(final String path) throws IOException {
-    URI uri = URI.create(path);
-    return "http".equals(uri.getScheme());
+  protected DependencyDescriptor newDependencyDescriptor(final String path) {
+    DependencyDescriptor descriptor = new DependencyDescriptor();
+    descriptor.setPath(path);
+    return descriptor;
   }
 
   @Override
-  protected Dependency resolveLocal(final String path) throws IOException {
+  protected boolean canResolve(final String path) throws IOException {
     URI uri = URI.create(path);
+    return "http".equals(uri.getScheme()) && path.endsWith(".js");
+  }
+
+  @Override
+  protected Dependency resolveLocal(final DependencyDescriptor descriptor) throws IOException {
+    URI uri = URI.create(descriptor.getPath());
     StringBuilder buffer = new StringBuilder();
     String[] host = uri.getHost().split("\\.");
     for (int i = host.length - 1; i >= 0; i--) {
@@ -70,7 +78,7 @@ public class RemoteResolver extends DependencyResolver {
     }
     buffer.append(tail[tail.length - 1]);
     File location = new File(homeDir, buffer.toString());
-    return new Dependency(path, location);
+    return new Dependency(descriptor.getPath(), location);
   }
 
   @Override

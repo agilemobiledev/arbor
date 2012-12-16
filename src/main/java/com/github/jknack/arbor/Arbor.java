@@ -19,6 +19,7 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 import java.io.File;
 import java.io.IOException;
 
+import com.github.jknack.arbor.bower.BowerResolver;
 import com.github.jknack.arbor.jam.JamResolver;
 import com.github.jknack.arbor.npm.NpmResolver;
 
@@ -39,9 +40,11 @@ public class Arbor {
    * Creates a new dependency resolver.
    *
    * @param homeDir The home directory.
+   * @throws IOException
    */
   public Arbor(final File homeDir) {
-    this(new RemoteResolver(homeDir), new JamResolver(homeDir), new NpmResolver(homeDir));
+    this(new RemoteResolver(homeDir), new JamResolver(homeDir), new BowerResolver(homeDir),
+        new NpmResolver(homeDir));
   }
 
   /**

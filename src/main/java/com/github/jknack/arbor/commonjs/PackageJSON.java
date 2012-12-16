@@ -72,7 +72,7 @@ public class PackageJSON {
    * The module's main js file.
    */
   @JsonProperty
-  private String main;
+  private Object main;
 
   /**
    * The module's dependency.
@@ -91,6 +91,11 @@ public class PackageJSON {
    */
   @JsonProperty
   private Map<String, Object> jam;
+
+  /**
+   * The location of this package.json.
+   */
+  private File location;
 
   /**
    * Required by Jackson.
@@ -125,7 +130,22 @@ public class PackageJSON {
    * @return The module main entry.
    */
   public String getMain() {
-    String main = this.main;
+    String main = null;
+    if (this.main instanceof List) {
+      @SuppressWarnings("unchecked")
+      List<String> candidates = (List<String>) this.main;
+      if (candidates.size() == 1) {
+        main = candidates.get(0);
+      } else {
+        for (String candidate : candidates) {
+          if (candidate.endsWith(".js")) {
+            main = candidate;
+          }
+        }
+      }
+    } else {
+      main = this.main == null ? null : this.main.toString();
+    }
     if (isEmpty(main)) {
       // try jam
       if (jam != null) {
@@ -187,7 +207,13 @@ public class PackageJSON {
    * @throws IOException If the package json file cannot be read it.
    */
   public static PackageJSON from(final File input) throws IOException {
-    return objectMapper.readValue(input, PackageJSON.class);
+    PackageJSON packageJSON = objectMapper.readValue(input, PackageJSON.class);
+    packageJSON.location = input;
+    if (isEmpty(packageJSON.version)) {
+      // some package.json files are really bad
+      packageJSON.version = input.getParentFile().getName();
+    }
+    return packageJSON;
   }
 
   /**
@@ -238,7 +264,12 @@ public class PackageJSON {
    */
   public Dependency resolve(final File baseDir, final Map<String, List<Expression>> registry)
       throws IOException {
-    File location = new File(baseDir, name + File.separator + version + File.separator + getMain());
+    final File location;
+    if (this.location != null) {
+      location = new File(this.location.getParent(), getMain());
+    } else {
+      location = new File(baseDir, name + File.separator + version + File.separator + getMain());
+    }
     if (!location.exists()) {
       throw new PackageIntegrityException(name + "@" + version, location);
     }
@@ -250,8 +281,11 @@ public class PackageJSON {
       List<Expression> versions = registry.get(name);
       version = resolveVersion(versions, name, version);
 
-      String depLocation = name + File.separator + version + File.separator + "package.json";
-      File packageJSONFile = new File(baseDir, depLocation);
+      String packageJSONPath = name + File.separator + version + File.separator;
+      File packageJSONFile = new File(baseDir, packageJSONPath + "package.json");
+      if (!packageJSONFile.exists()) {
+        packageJSONFile = new File(baseDir, packageJSONPath + "component.json");
+      }
       PackageJSON packageJSON = PackageJSON.from(packageJSONFile);
       root.add(packageJSON.resolve(baseDir, registry));
     }

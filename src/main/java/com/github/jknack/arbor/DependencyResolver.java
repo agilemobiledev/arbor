@@ -18,20 +18,122 @@ import static org.apache.commons.lang3.Validate.notEmpty;
 import static org.apache.commons.lang3.Validate.notNull;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpResponseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.jknack.arbor.commonjs.PackageIntegrityException;
+import com.github.jknack.arbor.commonjs.PackageNotFoundException;
+import com.github.jknack.arbor.version.Expression;
+import com.github.jknack.arbor.version.ExpressionParser;
+
 /**
  * Base class for Arbor dependency resolvers.
  *
  * @author edgar.espina
- * @since 0.0.1
+ * @since 0.1.0
  */
 public abstract class DependencyResolver {
+
+  /**
+   * A dependency descriptor.
+   *
+   * @author edgar.espina
+   */
+  public static class DependencyDescriptor {
+    /**
+     * The dependency's name. Optional.
+     */
+    private String name;
+
+    /**
+     * The dependency's version. Optional.
+     */
+    private String version;
+
+    /**
+     * The dependency's path.
+     */
+    private String path;
+
+    /**
+     * The dependency's id.
+     *
+     * @return The dependency's id.
+     */
+    public String getId() {
+      return name + "@" + version;
+    }
+
+    /**
+     * Set the dependency's name.
+     *
+     * @param name The dependency's name.
+     */
+    public void setName(final String name) {
+      this.name = name;
+    }
+
+    /**
+     * Set the dependency's path.
+     *
+     * @param path The dependency's path.
+     */
+    public void setPath(final String path) {
+      this.path = path;
+    }
+
+    /**
+     * The dependency's path.
+     *
+     * @return The dependency's path.
+     */
+    public String getPath() {
+      return path;
+    }
+
+    /**
+     * The dependency's name.
+     *
+     * @return The dependency's name.
+     */
+    public String getName() {
+      return name;
+    }
+
+    /**
+     * The dependency's version.
+     *
+     * @return The dependency's version.
+     */
+    public String getVersion() {
+      return version;
+    }
+
+    /**
+     * Set the dependency's version.
+     *
+     * @param version The dependency's version.
+     */
+    public void setVersion(final String version) {
+      this.version = version;
+    }
+
+    @Override
+    public String toString() {
+      return getId();
+    }
+  }
 
   /**
    * The logging system.
@@ -81,20 +183,38 @@ public abstract class DependencyResolver {
     try {
       Dependency dependency = null;
       if (canResolve(path)) {
-        dependency = resolveLocal(path);
+        DependencyDescriptor descriptor = newDependencyDescriptor(path);
+        dependency = resolveLocal(descriptor);
         if (!dependency.exists()) {
-
-          dependency = doResolve(path);
+          dependency = doResolve(descriptor);
         }
       }
       return dependency;
+    } catch (PackageIntegrityException ex) {
+      logger.debug("Invalid package", ex);
+      // recover from a package not found and move to the next resolver (if any)
+      return null;
+    } catch (PackageNotFoundException ex) {
+      logger.debug("Package not found", ex);
+      // recover from a package not found and move to the next resolver (if any)
+      return null;
     } catch (HttpResponseException ex) {
       if (ex.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        logger.debug("Package not found", ex);
+        // recover from a package not found and move to the next resolver (if any)
         return null;
       }
       throw ex;
     }
   }
+
+  /**
+   * Creates a new {@link DependencyDescriptor}.
+   * @param path The dependency's path.
+   * @return A new {@link DependencyDescriptor}.
+   * @throws IOException If descriptor creation goes wrong.
+   */
+  protected abstract DependencyDescriptor newDependencyDescriptor(String path) throws IOException;
 
   /**
    * True, if the path can be resolved by the dependency resolver.
@@ -109,20 +229,66 @@ public abstract class DependencyResolver {
    * Resolve the dependency path to a {@link Dependency}. The dependency path format depends on a
    * specify dependency resolver.
    *
-   * @param path The dependency path.
+   * @param descriptor The dependency descriptor.
    * @return A dependency for the given path.
    * @throws IOException If the dependency fail to be resolved.
    */
-  protected abstract Dependency doResolve(String path) throws IOException;
+  protected abstract Dependency doResolve(DependencyDescriptor descriptor) throws IOException;
 
   /**
    * Resolve the dependency path to a {@link Dependency}. The dependency path format depends on a
    * specify dependency resolver.
    *
-   * @param path The dependency path.
+   * @param descriptor The dependency descriptor.
    * @return A dependency for the given path.
    * @throws IOException If the dependency fail to be resolved.
    */
-  protected abstract Dependency resolveLocal(String path) throws IOException;
+  protected abstract Dependency resolveLocal(DependencyDescriptor descriptor) throws IOException;
+
+  /**
+   * Build a module home from a module descriptor.
+   *
+   * @param name The module's name.
+   * @return A module home directory.
+   */
+  protected File moduleHome(final String name) {
+    return new File(homeDir, name);
+  }
+
+  /**
+   * List all the modules available in the local repository. If there is more than one version per
+   * module, they are ordered by most recently created.
+   *
+   * @return All the modules available in the local repository. If there is more than one version
+   *         per module, they are ordered by most recently created.
+   */
+  protected Map<String, List<Expression>> jsModules() {
+    Map<String, List<Expression>> modules = new HashMap<String, List<Expression>>();
+    File[] moduleDirs = homeDir.listFiles();
+    for (File moduleDir : moduleDirs) {
+      if (moduleDir.isDirectory()) {
+        List<Expression> versions = new ArrayList<Expression>();
+        File[] versionDirs = moduleDir.listFiles(new FileFilter() {
+          @Override
+          public boolean accept(final File pathname) {
+            return !pathname.getName().equals("git");
+          }
+        });
+        for (File versionDir : versionDirs) {
+          if (versionDir.isDirectory()) {
+            versions.add(ExpressionParser.simpleParse(versionDir.getName()));
+          }
+          Collections.sort(versions, new Comparator<Expression>() {
+            @Override
+            public int compare(final Expression o1, final Expression o2) {
+              return -o1.compareTo(o2);
+            }
+          });
+          modules.put(moduleDir.getName(), versions);
+        }
+      }
+    }
+    return modules;
+  }
 
 }

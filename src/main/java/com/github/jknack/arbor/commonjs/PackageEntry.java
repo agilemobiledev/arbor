@@ -59,6 +59,11 @@ public class PackageEntry {
   private Map<String, PackageJSON> versions;
 
   /**
+   * The entry url.
+   */
+  private String url;
+
+  /**
    * The entry's name.
    *
    * @return The entry's name.
@@ -83,6 +88,15 @@ public class PackageEntry {
       }
     }
     return latest;
+  }
+
+  /**
+   * The entry's url.
+   *
+   * @return The entry's url.
+   */
+  public String getUrl() {
+    return url;
   }
 
   @Override

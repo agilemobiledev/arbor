@@ -25,7 +25,6 @@ import org.apache.http.client.HttpResponseException;
 import com.github.jknack.arbor.commonjs.PackageEntry;
 import com.github.jknack.arbor.commonjs.PackageJSON;
 import com.github.jknack.arbor.commonjs.PackageResolver;
-import com.github.jknack.arbor.version.Expression;
 
 /**
  * The jamjs resolver.
@@ -45,17 +44,13 @@ public class JamResolver extends PackageResolver {
   }
 
   @Override
-  protected PackageJSON packageJSON(final String path) throws IOException {
-    String[] moduleInfo = moduleInfo(path);
-    String name = moduleInfo[0];
-    String version = moduleInfo[1];
-    version = Expression.LATEST.equals(version) ? findLatest(name) : version;
-    String uri = registry + name;
+  protected PackageJSON packageJSON(final DependencyDescriptor descriptor) throws IOException {
+    String uri = registry + descriptor.getName();
     PackageEntry entry = packageEntry(uri);
     Map<String, PackageJSON> versions = entry.getVersions();
-    PackageJSON packageJSON = versions.get(version);
+    PackageJSON packageJSON = versions.get(descriptor.getVersion());
     if (packageJSON == null) {
-      throw new HttpResponseException(HttpStatus.SC_NOT_FOUND, registry + name);
+      throw new HttpResponseException(HttpStatus.SC_NOT_FOUND, registry + descriptor.getName());
     }
     logger.info("GET {}", uri);
     return packageJSON;

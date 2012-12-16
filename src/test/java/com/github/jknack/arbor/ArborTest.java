@@ -3,29 +3,16 @@ package com.github.jknack.arbor;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.File;
 import java.io.IOException;
 
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-public class ArborTest {
+public class ArborTest extends BaseTest {
 
-  private static File homeDir = new File("target/.m2/js");
-
-  /**
-   * The logging system.
-   */
-  private static final Logger logger = LoggerFactory.getLogger(ArborTest.class);
-
-  static {
-    homeDir.mkdirs();
-  }
-
+  private static Arbor arbor = new Arbor(homeDir);
   @Test
   public void jquery() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("http://code.jquery.com/jquery-1.8.3.js");
+    Dependency resolved = arbor.resolve("http://code.jquery.com/jquery-1.8.3.js");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -33,7 +20,7 @@ public class ArborTest {
 
   @Test
   public void backbone() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("backbone/0.9.9");
+    Dependency resolved = arbor.resolve("backbone/0.9.9");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -41,7 +28,7 @@ public class ArborTest {
 
   @Test
   public void backboneMarionette() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("Backbone.Marionette/1.0.0-beta6");
+    Dependency resolved = arbor.resolve("Backbone.Marionette/1.0.0-beta6");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -49,7 +36,7 @@ public class ArborTest {
 
   @Test
   public void underscore() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("underscore/latest");
+    Dependency resolved = arbor.resolve("underscore/latest");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -57,7 +44,7 @@ public class ArborTest {
 
   @Test
   public void knockout() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("knockout/2.2.0");
+    Dependency resolved = arbor.resolve("knockout/2.2.0");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -65,7 +52,7 @@ public class ArborTest {
 
   @Test
   public void crossroads() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("crossroads/0.10.0");
+    Dependency resolved = arbor.resolve("crossroads/0.10.0");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -73,7 +60,7 @@ public class ArborTest {
 
   @Test
   public void i18next() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("i18next/1.5.6");
+    Dependency resolved = arbor.resolve("i18next/1.5.6");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -81,7 +68,7 @@ public class ArborTest {
 
   @Test
   public void qunit() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("qunit/0.5.14");
+    Dependency resolved = arbor.resolve("qunit/0.5.14");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -89,7 +76,7 @@ public class ArborTest {
 
   @Test
   public void jshint() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("jshint/0.9.1");
+    Dependency resolved = arbor.resolve("jshint/0.9.1");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -97,7 +84,7 @@ public class ArborTest {
 
   @Test
   public void jqueryComponent() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("jquery/1.8.3");
+    Dependency resolved = arbor.resolve("jquery/1.8.3");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -105,7 +92,7 @@ public class ArborTest {
 
   @Test
   public void handlebars() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("handlebars/1.0.7");
+    Dependency resolved = arbor.resolve("handlebars/1.0.7");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -113,7 +100,7 @@ public class ArborTest {
 
   @Test
   public void request() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("request/latest");
+    Dependency resolved = arbor.resolve("request/latest");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -121,7 +108,7 @@ public class ArborTest {
 
   @Test
   public void async() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("async/latest");
+    Dependency resolved = arbor.resolve("async/latest");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -129,7 +116,7 @@ public class ArborTest {
 
   @Test
   public void coffeeScript() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("npm@coffee-script/latest");
+    Dependency resolved = arbor.resolve("npm@coffee-script/latest");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -137,7 +124,7 @@ public class ArborTest {
 
   @Test
   public void jade() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("jade/latest");
+    Dependency resolved = arbor.resolve("jade/latest");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -145,7 +132,7 @@ public class ArborTest {
 
   @Test
   public void socketIO() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("socket.io/latest");
+    Dependency resolved = arbor.resolve("socket.io/latest");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -153,7 +140,7 @@ public class ArborTest {
 
   @Test
   public void express() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("express/3.0.4");
+    Dependency resolved = arbor.resolve("express/3.0.4");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -161,7 +148,7 @@ public class ArborTest {
 
   @Test
   public void less() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("less/1.3.1");
+    Dependency resolved = arbor.resolve("less/1.3.1");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -169,7 +156,7 @@ public class ArborTest {
 
   @Test
   public void jsdom() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("jsdom/0.3.1");
+    Dependency resolved = arbor.resolve("jsdom/0.3.1");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -177,7 +164,7 @@ public class ArborTest {
 
   @Test
   public void mongoose() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("mongoose/3.5.1");
+    Dependency resolved = arbor.resolve("mongoose/3.5.1");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -185,7 +172,7 @@ public class ArborTest {
 
   @Test
   public void mongodb() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("mongodb/1.2.5");
+    Dependency resolved = arbor.resolve("mongodb/1.2.5");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -193,7 +180,7 @@ public class ArborTest {
 
   @Test
   public void requirejs() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("requirejs/2.1.2");
+    Dependency resolved = arbor.resolve("requirejs/2.1.2");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);
@@ -201,7 +188,23 @@ public class ArborTest {
 
   @Test
   public void browserify() throws IOException {
-    Dependency resolved = new Arbor(homeDir).resolve("browserify/1.16.6");
+    Dependency resolved = arbor.resolve("browserify/1.16.6");
+    assertNotNull(resolved);
+    assertTrue("File not found", resolved.exists());
+    logger.info("{}", resolved);
+  }
+
+  @Test
+  public void jam() throws IOException {
+    Dependency resolved = arbor.resolve("jam/0.2.2");
+    assertNotNull(resolved);
+    assertTrue("File not found", resolved.exists());
+    logger.info("{}", resolved);
+  }
+
+  @Test
+  public void volo() throws IOException {
+    Dependency resolved = arbor.resolve("volo/0.2.6");
     assertNotNull(resolved);
     assertTrue("File not found", resolved.exists());
     logger.info("{}", resolved);

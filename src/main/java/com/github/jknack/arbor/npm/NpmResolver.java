@@ -56,8 +56,8 @@ public class NpmResolver extends PackageResolver {
   }
 
   @Override
-  protected PackageJSON packageJSON(final String path) throws IOException {
-    String uri = registry + path;
+  protected PackageJSON packageJSON(final DependencyDescriptor descriptor) throws IOException {
+    String uri = registry + descriptor.getPath();
     logger.info("GET {}", uri);
     String json = Get(uri)
         .execute().returnContent().asString();

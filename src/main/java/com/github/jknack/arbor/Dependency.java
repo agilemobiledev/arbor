@@ -30,7 +30,7 @@ import org.apache.commons.io.FileUtils;
  * A dependency have a name, version, location and optional dependencies.
  *
  * @author edgar.espina
- * @since 0.0.1
+ * @since 0.1.0
  */
 public class Dependency {
 

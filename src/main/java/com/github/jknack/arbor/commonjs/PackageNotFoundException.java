@@ -14,34 +14,23 @@
  */
 package com.github.jknack.arbor.commonjs;
 
-import java.io.File;
 import java.io.IOException;
 
 /**
- * Raised when a corrupted package is detected.
+ * Raised when a package is not found.
  *
  * @author edgar.espina
  * @since 0.1.0
  */
 @SuppressWarnings("serial")
-public class PackageIntegrityException extends IOException {
+public class PackageNotFoundException extends IOException {
 
   /**
-   * Creates a new {@link PackageIntegrityException}.
-   *
-   * @param id The package's id.
-   * @param location The location of the package.
-   */
-  public PackageIntegrityException(final String id, final File location) {
-    super("Invalid 'main' entry for module: " + id + ". Reason: file not found: " + location);
-  }
-
-  /**
-   * Creates a new {@link PackageIntegrityException}.
+   * Creates a new {@link PackageNotFoundException}.
    *
    * @param id The package's id.
    */
-  public PackageIntegrityException(final String id) {
-    super("Not found: " + id);
+  public PackageNotFoundException(final String id) {
+    super(id);
   }
 }

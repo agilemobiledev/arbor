@@ -14,20 +14,15 @@
  */
 package com.github.jknack.arbor.commonjs;
 
+import static org.apache.commons.lang3.StringUtils.isEmpty;
 import static org.apache.commons.lang3.Validate.notNull;
 import static org.apache.http.client.fluent.Request.Get;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -44,7 +39,6 @@ import com.github.jknack.arbor.DependencyResolutionException;
 import com.github.jknack.arbor.DependencyResolver;
 import com.github.jknack.arbor.io.Tarball;
 import com.github.jknack.arbor.version.Expression;
-import com.github.jknack.arbor.version.ExpressionParser;
 
 /**
  * A package.json dependency resolver.
@@ -117,28 +111,48 @@ public abstract class PackageResolver extends DependencyResolver {
   }
 
   @Override
-  protected Dependency doResolve(final String path) throws IOException {
+  protected Dependency doResolve(final DependencyDescriptor descriptor) throws IOException {
     Set<String> dependencySet = new HashSet<String>();
     LinkedList<String> dependencyPath = new LinkedList<String>();
     Set<File> moduleDirs = new HashSet<File>();
     boolean success = false;
     try {
-      doResolve(path, moduleHome(moduleInfo(path)), dependencySet, dependencyPath, moduleDirs);
+      doResolve(descriptor, moduleHome(descriptor.getName()), dependencySet, dependencyPath,
+          moduleDirs);
+      Dependency dependency = resolveLocal(descriptor);
       success = true;
-      return resolveLocal(path);
+      return dependency;
     } catch (HttpResponseException ex) {
       // dont wrap http response exceptions.
+      throw ex;
+    } catch (PackageNotFoundException ex) {
+      // dont wrap package integrity exceptions.
       throw ex;
     } catch (PackageIntegrityException ex) {
       // dont wrap package integrity exceptions.
       throw ex;
-    } catch (Exception ex) {
+    } catch (RuntimeException ex) {
       throw new DependencyResolutionException(dependencyPath, ex);
     } finally {
       if (!success) {
         deleteDirectory(moduleDirs);
       }
     }
+  }
+
+  @Override
+  protected DependencyDescriptor newDependencyDescriptor(final String path) throws IOException {
+    DependencyDescriptor descriptor = new DependencyDescriptor();
+    String[] parts = StringUtils.split(path, "/");
+    String name = parts[0];
+    String version = parts[1];
+    if (isEmpty(version) || Expression.LATEST.equals(version)) {
+      version = findLatest(name);
+    }
+    descriptor.setName(name);
+    descriptor.setVersion(version);
+    descriptor.setPath(path);
+    return descriptor;
   }
 
   /**
@@ -163,27 +177,53 @@ public abstract class PackageResolver extends DependencyResolver {
   /**
    * Recursively resolve a dependency graph.
    *
-   * @param path The dependency to resolve.
+   * @param descriptor The dependency to resolve.
    * @param moduleRoot The module root directory.
    * @param dependencySet The already processed dependency set.
    * @param dependencyPath The current dependency path. useful for debugging.
    * @param moduleDirs Modules directory need to be appended here. Useful in case of errors.
    * @throws IOException If a dependency cannot be resolved.
    */
-  protected void doResolve(final String path, final File moduleRoot,
+  protected void doResolve(final DependencyDescriptor descriptor, final File moduleRoot,
       final Set<String> dependencySet, final LinkedList<String> dependencyPath,
-      final Set<File> moduleDirs)
-      throws IOException {
-    if (!dependencySet.add(path)) {
+      final Set<File> moduleDirs) throws IOException {
+    if (!dependencySet.add(descriptor.getId())) {
       return;
     }
-    String[] moduleInfo = moduleInfo(path);
-    dependencyPath.add(moduleInfo[0] + "@" + moduleInfo[1]);
-    PackageJSON packageJSON = packageJSON(path);
+    dependencyPath.add(descriptor.getId());
+    PackageJSON packageJSON = packageJSON(descriptor);
     File moduleHome = new File(moduleRoot, packageJSON.getVersion());
     moduleHome.mkdirs();
     moduleDirs.add(moduleHome);
 
+    extract(packageJSON, moduleHome);
+
+    // dependencies
+    Set<Entry<String, String>> dependencies = packageJSON.getDependencies().entrySet();
+    for (Entry<String, String> dependency : dependencies) {
+      String name = dependency.getKey();
+      String expr = dependency.getValue();
+      String version = resolveVersion(name, expr);
+      DependencyDescriptor depDescriptor = new DependencyDescriptor();
+      depDescriptor.setName(name);
+      depDescriptor.setVersion(version);
+      depDescriptor.setPath(name + "/" + version);
+      Dependency localDep = resolveLocal(depDescriptor);
+      if (!localDep.exists()) {
+        doResolve(depDescriptor, moduleHome(name), dependencySet, dependencyPath, moduleDirs);
+      }
+    }
+    dependencyPath.removeLast();
+  }
+
+  /**
+   * Extract a file to a local directory.
+   *
+   * @param packageJSON The packageJSON object.
+   * @param moduleHome The module home directory.
+   * @throws IOException If the extraction goes wrong.
+   */
+  protected void extract(final PackageJSON packageJSON, final File moduleHome) throws IOException {
     // get tarball
     URI tarballURI = tarball(packageJSON);
     logger.info("GET {}", tarballURI);
@@ -196,21 +236,6 @@ public abstract class PackageResolver extends DependencyResolver {
     ua.setDestDirectory(moduleHome);
     ua.extract();
     tarball.delete();
-
-    // dependencies
-    Set<Entry<String, String>> dependencies = packageJSON.getDependencies().entrySet();
-    for (Entry<String, String> dependency : dependencies) {
-      String name = dependency.getKey();
-      String expr = dependency.getValue();
-      String version = resolveVersion(name, expr);
-      String depPath = name + "/" + version;
-      Dependency localDep = resolveLocal(depPath);
-      if (!localDep.exists()) {
-        doResolve(depPath, moduleHome(moduleInfo(depPath)), dependencySet, dependencyPath,
-            moduleDirs);
-      }
-    }
-    dependencyPath.removeLast();
   }
 
   /**
@@ -227,11 +252,12 @@ public abstract class PackageResolver extends DependencyResolver {
   /**
    * Get a package.json object.
    *
-   * @param path A relative path to the package.json file.
+   * @param descriptor A dependency descriptor.
    * @return A new package.json object.
    * @throws IOException If the package.json object cannot be created.
    */
-  protected abstract PackageJSON packageJSON(final String path) throws IOException;
+  protected abstract PackageJSON packageJSON(final DependencyDescriptor descriptor)
+      throws IOException;
 
   /**
    * Get package.json descriptor from an absolute uri.
@@ -248,75 +274,20 @@ public abstract class PackageResolver extends DependencyResolver {
     return entry;
   }
 
-  /**
-   * Build a module home from a module descriptor.
-   *
-   * @param moduleInfo The module descriptor.
-   * @return A module home directory.
-   */
-  protected File moduleHome(final String[] moduleInfo) {
-    return new File(homeDir, moduleInfo[0]);
-  }
-
-  /**
-   * List all the modules available in the local repository. If there is more than one version per
-   * module, they are ordered by most recently created.
-   *
-   * @return All the modules available in the local repository. If there is more than one version
-   *         per module, they are ordered by most recently created.
-   */
-  private Map<String, List<Expression>> jsModules() {
-    Map<String, List<Expression>> modules = new HashMap<String, List<Expression>>();
-    File[] moduleDirs = homeDir.listFiles();
-    for (File moduleDir : moduleDirs) {
-      if (moduleDir.isDirectory()) {
-        List<Expression> versions = new ArrayList<Expression>();
-        File[] versionDirs = moduleDir.listFiles();
-        for (File versionDir : versionDirs) {
-          if (versionDir.isDirectory()) {
-            versions.add(ExpressionParser.simpleParse(versionDir.getName()));
-          }
-          Collections.sort(versions, new Comparator<Expression>() {
-            @Override
-            public int compare(final Expression o1, final Expression o2) {
-              return -o1.compareTo(o2);
-            }
-          });
-          modules.put(moduleDir.getName(), versions);
-        }
+  @Override
+  protected Dependency resolveLocal(final DependencyDescriptor descriptor) throws IOException {
+    File moduleHome = new File(moduleHome(descriptor.getName()), descriptor.getVersion());
+    File[] packageJSONs = new File[]{new File(moduleHome, "component.json"),
+        new File(moduleHome, "package.json") };
+    for (File packageJSONFile : packageJSONs) {
+      if (packageJSONFile.exists()) {
+        PackageJSON packageJSON = PackageJSON.from(packageJSONFile);
+        Dependency dependency = packageJSON.resolve(homeDir, jsModules());
+        return dependency;
       }
     }
-    return modules;
-  }
-
-  @Override
-  protected Dependency resolveLocal(final String path) throws IOException {
-    String[] moduleInfo = moduleInfo(path);
-    if (Expression.LATEST.equals(moduleInfo[1])) {
-      moduleInfo[1] = findLatest(moduleInfo[0]);
-    }
-    File moduleHome = new File(moduleHome(moduleInfo), moduleInfo[1]);
-    File packageJSONFile = new File(moduleHome, "package.json");
-    if (packageJSONFile.exists()) {
-      PackageJSON packageJSON = PackageJSON.from(packageJSONFile);
-      Dependency dependency = packageJSON.resolve(homeDir, jsModules());
-      return dependency;
-    } else {
-      String name = moduleInfo[0];
-      String version = moduleInfo[1];
-      File location = new File(moduleHome, name + ".js");
-      return new Dependency(name, version, location);
-    }
-  }
-
-  /**
-   * Creates a module descriptor from the given path.
-   *
-   * @param path A dependency path.
-   * @return a module descriptor from the given path.
-   */
-  protected String[] moduleInfo(final String path) {
-    return StringUtils.split(path, "/");
+    File location = new File(moduleHome, descriptor.getName() + ".js");
+    return new Dependency(descriptor.getName(), descriptor.getVersion(), location);
   }
 
   /**
